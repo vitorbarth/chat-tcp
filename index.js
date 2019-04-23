@@ -17,6 +17,7 @@ let tratamento = {
         socket.uuid = data.origem
         sockets.push(socket)
 
+        console.log(`Usuário "${socket.apelido}" logado com sucesso!`)
         return [
             {
                 socket: socket,
@@ -81,7 +82,6 @@ let tratamento = {
                         texto: msg.texto,
                     },
 
-
                 }
             }
 
@@ -99,6 +99,11 @@ let buscarDestinatario = (apelido) => {
     return dest
 }
 
+// Função que prepara um objeto javascript para ser enviado
+let content = (obj) => {
+    return Buffer.from(JSON.stringify(obj) + '\n');
+}
+
 server.on('connection', (socket) => {
     console.log('connection established');
     socket.setEncoding('utf8');
@@ -111,9 +116,8 @@ server.on('connection', (socket) => {
         let resposta = tratamento[mensagem.tipo](socket, mensagem)
 
         resposta.forEach(x => {
-            x.socket.write(JSON.stringify(x.mensagem+'/n'))
+            x.socket.write(content(x.mensagem))
         });
-
 
     });
 

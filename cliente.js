@@ -1,42 +1,46 @@
-var net = require('net');
+const net = require('net');
+const readline = require('readline');
+const id = new require('uuid/v1')();
 
 var client = new net.Socket();
+let user
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+let lerResultado = (data) => {
+    console.log('Received: ')
+    console.log(JSON.stringify(data, null, 4));
+}
+
+let mensagem = (tipo, conteudo) => {
+    return {
+        versao: 1,
+        hora: Math.floor(new Date().getTime()),
+        tipo: tipo,
+        origem: id,
+        conteudo: conteudo
+    }
+}
+
 client.connect(9000, '127.0.0.1', () => {
     console.log('Connected');
 
-    let mensagem = {
-        versao: 1,
-        hora: 1553037555.49,
-        tipo: 200,
-        origem: "3d0ca315-aff9–4fc2-be61–3b76b9a2d798",
-        conteudo: {
-            remetente: "VITOR",
-        }
+    // LOGIN
+    rl.question('Informe seu usuario: ', (usuario) => {
+        user = usuario
+        let msg = mensagem(200, {remetente : user})
+        client.write(JSON.stringify(msg));
+    });
 
-    }
-
-    client.write(JSON.stringify(mensagem));
-
-    let mensagem2 = {
-        versao: 1,
-        hora: 1553037555.49,
-        tipo: 201,
-        origem: "3d0ca315-aff9–4fc2-be61–3b76b9a2d798",
-        conteudo: {
-            remetente: "VITOR",
-            destinatario: "BARTH",
-            texto: "primeira mensagem"
-        }
-
-    }
-
-    client.write(JSON.stringify(mensagem2));
 });
 
 client.on('data', (data) => {
     data = JSON.parse(data)
-    console.log('Received: ' + JSON.stringify(data, null, 4));
-    // client.destroy(); // kill client after server's response
+    lerResultado(data)
+
 });
 
 client.on('close', () => {
