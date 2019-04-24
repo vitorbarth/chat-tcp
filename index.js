@@ -4,6 +4,18 @@ let connections = []
 
 let server = net.createServer();
 
+let mensagem = (socket, data, tipo, conteudo) => {
+    return {
+        socket: socket,
+        mensagem: {
+            versao: 1,
+            hora: data.hora,
+            tipo: tipo,
+            origem: data.origem,
+            conteudo: conteudo
+        }
+    }
+}
 
 let tratamento = {
 
@@ -13,40 +25,41 @@ let tratamento = {
 
     //login
     '200': (socket, data) => {
-        socket.apelido = data.conteudo.remetente
-        socket.uuid = data.origem
-        sockets.push(socket)
+        try {
+            socket.apelido = data.conteudo.remetente
+            socket.uuid = data.origem
+            sockets.push(socket)
 
-        console.log(`Usuário "${socket.apelido}" logado com sucesso!`)
-        return [
-            {
-                socket: socket,
-                mensagem: {
-                    versao: 1,
-                    hora: data.hora,
-                    tipo: 100,
-                    origem: data.origem,
-                    conteudo: {
-                        resultado: 0,
-                        mensagem: "",
-                    },
-                }
-            },
-            {
-                socket: socket,
-                mensagem: {
-                    versao: 1,
-                    hora: data.hora,
-                    tipo: 101,
-                    origem: data.origem,
-                    conteudo: {
-                        registrados: sockets.map(x => { return x.apelido }),
-                        entraram: [],
-                        sairam: [],
-                    },
-                }
+            console.log(`Usuário "${socket.apelido}" logado com sucesso!`)
+
+            //Retorno de sucesso do login
+            let retornoLogin = {
+                resultado: 0,
+                mensagem: "",
             }
-        ]
+
+            //Lista de usuários cadastrados 
+            let retornoUsuarios = {
+                registrados: sockets.map(x => { return x.apelido }),
+                entraram: [],
+                sairam: [],
+            }
+            return [
+                mensagem(socket, data, 100, retornoLogin),
+                mensagem(socket, data, 101, retornoUsuarios)
+            ]
+        } catch (err) {
+
+            //Retorno de falha do login
+            let retornoLoginErr = {
+                resultado: 1,
+                mensagem: err,
+            }
+            return [
+                mensagem(socket, data, 100, retornoLoginErr),
+            ]
+        }
+
     },
 
 
@@ -105,14 +118,12 @@ let content = (obj) => {
 }
 
 server.on('connection', (socket) => {
-    console.log('connection established');
     socket.setEncoding('utf8');
 
     socket.on('data', (data) => {
         let mensagem = JSON.parse(data)
 
-        console.log(JSON.stringify(mensagem, null, 4))
-
+        // console.log(JSON.stringify(mensagem, null, 4))
         let resposta = tratamento[mensagem.tipo](socket, mensagem)
 
         resposta.forEach(x => {
