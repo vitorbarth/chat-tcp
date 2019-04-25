@@ -69,19 +69,7 @@ let tratamento = {
         let dest = buscarDestinatario(msg.destinatario)
 
         return [
-            {
-                socket: socket,
-                mensagem: {
-                    versao: 1,
-                    hora: data.hora,
-                    tipo: 100,
-                    origem: data.origem,
-                    conteudo: {
-                        resultado: 0,
-                        mensagem: "",
-                    },
-                }
-            },
+       
             {
                 socket: dest,
                 mensagem: {
